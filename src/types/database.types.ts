@@ -23,8 +23,23 @@ export interface Database {
           expires_at: string;
           scopes: string[] | null;
         };
-        Insert: Omit<Database['public']['Tables']['integration_tokens']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['integration_tokens']['Row']>;
+        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
+        Insert: {
+          service_name: string;
+          access_token: string;
+          refresh_token?: string | null;
+          expires_at: string;
+          scopes?: string[] | null;
+        };
+        Update: {
+          id?: number;
+          created_at?: string;
+          service_name?: string;
+          access_token?: string;
+          refresh_token?: string | null;
+          expires_at?: string;
+          scopes?: string[] | null;
+        };
       };
       ingestion_cycles: {
         Row: {
@@ -36,8 +51,24 @@ export interface Database {
           pins_processed: number;
           errors_encountered: number;
         };
-        Insert: Omit<Database['public']['Tables']['ingestion_cycles']['Row'], 'started_at'>;
-        Update: Partial<Database['public']['Tables']['ingestion_cycles']['Row']>;
+        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
+        Insert: {
+          cycle_id: string; // UUID
+          ended_at?: string | null;
+          status: IngestionStatus;
+          logs?: Json | null;
+          pins_processed: number;
+          errors_encountered: number;
+        };
+        Update: {
+          cycle_id?: string;
+          started_at?: string;
+          ended_at?: string | null;
+          status?: IngestionStatus;
+          logs?: Json | null;
+          pins_processed?: number;
+          errors_encountered?: number;
+        };
       };
       raw_buffer: {
         Row: {
@@ -49,8 +80,23 @@ export interface Database {
           error_log: string | null;
           processed_at: string | null;
         };
-        Insert: Omit<Database['public']['Tables']['raw_buffer']['Row'], 'id' | 'received_at'>;
-        Update: Partial<Database['public']['Tables']['raw_buffer']['Row']>;
+        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
+        Insert: {
+          source_service: string;
+          payload: Json;
+          is_processed: boolean;
+          error_log?: string | null;
+          processed_at?: string | null;
+        };
+        Update: {
+          id?: number;
+          received_at?: string;
+          source_service?: string;
+          payload?: Json;
+          is_processed?: boolean;
+          error_log?: string | null;
+          processed_at?: string | null;
+        };
       };
       matrices: {
         Row: {
@@ -61,8 +107,21 @@ export interface Database {
           description: string | null;
           is_active: boolean;
         };
-        Insert: Omit<Database['public']['Tables']['matrices']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['matrices']['Row']>;
+        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
+        Insert: {
+          code: string;
+          type: MatrixType;
+          description?: string | null;
+          is_active?: boolean;
+        };
+        Update: {
+          id?: number;
+          created_at?: string;
+          code?: string;
+          type?: MatrixType;
+          description?: string | null;
+          is_active?: boolean;
+        };
       };
       assets: {
         Row: {
@@ -75,17 +134,17 @@ export interface Database {
           total_score: number;
           metadata: Json | null;
         };
-        // FIX: Expanded Insert and Update types to resolve a recursive type inference issue in TypeScript.
-        // This prevents Supabase methods from incorrectly inferring parameter types as `never`.
+        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
+          id?: string;
           sku_slug: string;
           name: string;
           current_rarity: RarityTier;
-          total_score: number;
-          metadata: Json | null;
+          total_score?: number;
+          metadata?: Json | null;
         };
         Update: {
-          id?: string; // UUID
+          id?: string;
           created_at?: string;
           updated_at?: string;
           sku_slug?: string;
@@ -107,8 +166,7 @@ export interface Database {
           board_id: string | null;
           last_stats: Json;
         };
-        // FIX: Expanded Insert and Update types to resolve a recursive type inference issue in TypeScript.
-        // This prevents Supabase methods from incorrectly inferring parameter types as `never`.
+        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
           pin_id: string;
           asset_id?: string | null;
@@ -140,8 +198,23 @@ export interface Database {
           save_count: number;
           source: string;
         };
-        Insert: Omit<Database['public']['Tables']['pin_metric_history']['Row'], 'id' | 'recorded_at'>;
-        Update: Partial<Database['public']['Tables']['pin_metric_history']['Row']>;
+        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
+        Insert: {
+          pin_id_fk: string;
+          impression_count: number;
+          outbound_click_count: number;
+          save_count: number;
+          source: string;
+        };
+        Update: {
+          id?: number;
+          pin_id_fk?: string;
+          recorded_at?: string;
+          impression_count?: number;
+          outbound_click_count?: number;
+          save_count?: number;
+          source?: string;
+        };
       };
     };
     Views: {
