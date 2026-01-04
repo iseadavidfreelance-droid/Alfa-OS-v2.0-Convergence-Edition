@@ -65,12 +65,6 @@ const MatrixDeck: React.FC = () => {
                     <h1 className="text-4xl font-bold text-matrix">Matrix Deck</h1>
                     <p className="text-gray-500 mt-1">Asset visualization and management portal.</p>
                 </div>
-                <Link to="/biolab/new">
-                    <Button variant="primary">
-                        <PlusCircle size={16} className="inline-block mr-2" />
-                        Synthesize Asset
-                    </Button>
-                </Link>
             </div>
 
             <div className="mb-6">

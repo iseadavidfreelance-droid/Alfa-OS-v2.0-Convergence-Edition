@@ -49,16 +49,18 @@ const ArenaPage: React.FC = () => {
         event.preventDefault();
         setIsSubmitting(true);
         const formData = new FormData(event.currentTarget);
+        // FIX: The `metadata: null` property was causing a type inference issue with the `insert` method,
+        // leading to an incorrect `never` type. Since `metadata` is optional, we can omit it, and the
+        // database will handle the default value.
         const newAssetData = {
             sku_slug: formData.get('sku_slug') as string,
             name: formData.get('name') as string,
             current_rarity: formData.get('current_rarity') as RarityTier,
             total_score: parseInt(formData.get('total_score') as string, 10),
-            metadata: null,
         };
 
         try {
-            const { error } = await supabase.from('assets').insert(newAssetData);
+            const { error } = await supabase.from('assets').insert([newAssetData]);
             if (error) throw error;
             setIsModalOpen(false);
             fetchAssets(); // Refresh asset list

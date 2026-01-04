@@ -1,6 +1,7 @@
 export type RarityTier = "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY" | "MYTHIC";
 export type MatrixType = "CORE" | "SUPPORT" | "ANOMALY" | "UTILITY";
 export type IngestionStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+export type RawBufferDecision = "PENDING" | "APPROVED" | "REJECTED";
 
 export type Json =
   | string
@@ -23,7 +24,6 @@ export interface Database {
           expires_at: string;
           scopes: string[] | null;
         };
-        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
           service_name: string;
           access_token: string;
@@ -50,8 +50,10 @@ export interface Database {
           logs: Json | null;
           pins_processed: number;
           errors_encountered: number;
+          source_endpoint: string;
+          operator_signature: string;
+          total_items_committed: number;
         };
-        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
           cycle_id: string; // UUID
           ended_at?: string | null;
@@ -59,6 +61,9 @@ export interface Database {
           logs?: Json | null;
           pins_processed: number;
           errors_encountered: number;
+          source_endpoint: string;
+          operator_signature: string;
+          total_items_committed: number;
         };
         Update: {
           cycle_id?: string;
@@ -68,6 +73,9 @@ export interface Database {
           logs?: Json | null;
           pins_processed?: number;
           errors_encountered?: number;
+          source_endpoint?: string;
+          operator_signature?: string;
+          total_items_committed?: number;
         };
       };
       raw_buffer: {
@@ -79,14 +87,17 @@ export interface Database {
           is_processed: boolean;
           error_log: string | null;
           processed_at: string | null;
+          validation_flags: Json | null;
+          decision: RawBufferDecision;
         };
-        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
           source_service: string;
           payload: Json;
-          is_processed: boolean;
+          is_processed?: boolean;
           error_log?: string | null;
           processed_at?: string | null;
+          validation_flags?: Json | null;
+          decision?: RawBufferDecision;
         };
         Update: {
           id?: number;
@@ -96,6 +107,8 @@ export interface Database {
           is_processed?: boolean;
           error_log?: string | null;
           processed_at?: string | null;
+          validation_flags?: Json | null;
+          decision?: RawBufferDecision;
         };
       };
       matrices: {
@@ -107,7 +120,6 @@ export interface Database {
           description: string | null;
           is_active: boolean;
         };
-        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
           code: string;
           type: MatrixType;
@@ -133,8 +145,9 @@ export interface Database {
           current_rarity: RarityTier;
           total_score: number;
           metadata: Json | null;
+          matrix_config: Json | null;
+          destination_link: string | null;
         };
-        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
           id?: string;
           sku_slug: string;
@@ -142,6 +155,8 @@ export interface Database {
           current_rarity: RarityTier;
           total_score?: number;
           metadata?: Json | null;
+          matrix_config?: Json | null;
+          destination_link?: string | null;
         };
         Update: {
           id?: string;
@@ -152,6 +167,8 @@ export interface Database {
           current_rarity?: RarityTier;
           total_score?: number;
           metadata?: Json | null;
+          matrix_config?: Json | null;
+          destination_link?: string | null;
         };
       };
       active_pins: {
@@ -166,7 +183,6 @@ export interface Database {
           board_id: string | null;
           last_stats: Json;
         };
-        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
           pin_id: string;
           asset_id?: string | null;
@@ -198,7 +214,6 @@ export interface Database {
           save_count: number;
           source: string;
         };
-        // FIX: Manually defining Insert and Update types to avoid TypeScript's circular reference issue.
         Insert: {
           pin_id_fk: string;
           impression_count: number;
@@ -214,6 +229,32 @@ export interface Database {
           outbound_click_count?: number;
           save_count?: number;
           source?: string;
+        };
+      };
+      transaction_ledger: {
+        Row: {
+          id: string; // uuid
+          asset_id: string; // uuid
+          operator_id: string;
+          amount: number;
+          context: string;
+          recorded_at: string;
+        };
+        Insert: {
+          id?: string; // uuid
+          asset_id: string;
+          operator_id: string;
+          amount: number;
+          context: string;
+          recorded_at?: string;
+        };
+        Update: {
+          id?: string;
+          asset_id?: string;
+          operator_id?: string;
+          amount?: number;
+          context?: string;
+          recorded_at?: string;
         };
       };
     };

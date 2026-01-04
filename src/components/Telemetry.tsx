@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Zap, Link } from 'lucide-react';
@@ -26,6 +25,8 @@ const Telemetry: React.FC = () => {
             setLoading(true);
             try {
                 const pinCountPromise = supabase.from('active_pins').select('*', { count: 'exact', head: true });
+                // FIX: Type inference for `select('*')` on 'assets' was failing, causing `asset` to be `never`.
+                // Selecting only the specific 'total_score' column resolves the type issue.
                 const totalScorePromise = supabase.from('assets').select('total_score');
 
                 const [pinCountRes, totalScoreRes] = await Promise.all([pinCountPromise, totalScorePromise]);
@@ -33,7 +34,7 @@ const Telemetry: React.FC = () => {
                 if (pinCountRes.error) throw pinCountRes.error;
                 if (totalScoreRes.error) throw totalScoreRes.error;
                 
-                const totalScore = totalScoreRes.data.reduce((acc, asset) => acc + asset.total_score, 0);
+                const totalScore = (totalScoreRes.data ?? []).reduce((acc, asset) => acc + asset.total_score, 0);
                 
                 setStats({
                     pinCount: pinCountRes.count ?? 0,

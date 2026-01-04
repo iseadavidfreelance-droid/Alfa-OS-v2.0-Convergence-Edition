@@ -101,26 +101,6 @@ const QuarantineZone: React.FC<{ setToast: (toast: any) => void }> = ({ setToast
     }, [setToast]);
 
     useEffect(() => { fetchItems(); }, [fetchItems]);
-
-    const handleAction = async (action: 'purge' | 'retry') => {
-        if (!selected) return;
-        
-        let query;
-        if (action === 'purge') {
-            query = supabase.from('raw_buffer').delete().eq('id', selected.id);
-        } else { // retry
-            query = supabase.from('raw_buffer').update({ error_log: null }).eq('id', selected.id);
-        }
-
-        const { error } = await query;
-        if (error) {
-            setToast({ message: error.message, type: 'error' });
-        } else {
-            setToast({ message: `Item ${action}d successfully.`, type: 'success' });
-            setSelected(null);
-            fetchItems(); // Refresh list
-        }
-    };
     
     return (
         <div className="grid grid-cols-3 gap-4 h-full">
@@ -140,10 +120,6 @@ const QuarantineZone: React.FC<{ setToast: (toast: any) => void }> = ({ setToast
                     <div className="flex flex-col h-full">
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="text-gray-300 font-bold">Inspector: {selected.id}</h3>
-                            <div className="flex gap-2">
-                                <Button onClick={() => handleAction('retry')} variant="primary"><RefreshCw size={14} className="mr-2"/>RETRY</Button>
-                                <Button onClick={() => handleAction('purge')} variant="destructive"><Trash2 size={14} className="mr-2"/>PURGE</Button>
-                            </div>
                         </div>
                         <div className="mb-4">
                             <h4 className="text-sm font-semibold text-alert">Error Log</h4>
@@ -151,7 +127,7 @@ const QuarantineZone: React.FC<{ setToast: (toast: any) => void }> = ({ setToast
                         </div>
                         <div className="flex-grow min-h-0">
                             <h4 className="text-sm font-semibold text-gray-400">Payload</h4>
-                            <pre className="text-xs bg-gray-900 p-3 rounded-sm h-[calc(100vh-350px)] overflow-auto">{JSON.stringify(selected.payload, null, 2)}</pre>
+                            <pre className="text-xs bg-gray-900 p-3 rounded-sm h-[calc(100vh-320px)] overflow-auto">{JSON.stringify(selected.payload, null, 2)}</pre>
                         </div>
                     </div>
                 ) : <div className="text-gray-600 text-center pt-20">Select an item to inspect.</div>}
