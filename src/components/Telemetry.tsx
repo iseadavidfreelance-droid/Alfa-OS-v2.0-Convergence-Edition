@@ -25,9 +25,10 @@ const Telemetry: React.FC = () => {
             setLoading(true);
             try {
                 const pinCountPromise = supabase.from('active_pins').select('*', { count: 'exact', head: true });
-                // FIX: Type inference for `select('*')` on 'assets' was failing, causing `asset` to be `never`.
-                // Selecting only the specific 'total_score' column resolves the type issue.
-                const totalScorePromise = supabase.from('assets').select('total_score');
+                // FIX: Type inference for Supabase queries within `Promise.all` can sometimes be brittle.
+                // Using `select('*')` instead of `select('total_score')` helps TypeScript correctly infer the
+                // row type for 'assets', thus resolving the error where `asset` was typed as `never`.
+                const totalScorePromise = supabase.from('assets').select('*');
 
                 const [pinCountRes, totalScoreRes] = await Promise.all([pinCountPromise, totalScorePromise]);
 

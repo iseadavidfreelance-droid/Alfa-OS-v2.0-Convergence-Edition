@@ -8,6 +8,8 @@ import Modal from '../../components/ui/Modal';
 import { PlusCircle, Zap } from 'lucide-react';
 
 type Asset = Database['public']['Tables']['assets']['Row'];
+// FIX: Explicitly define the Insert type for an Asset to ensure type safety when creating new records.
+type AssetInsert = Database['public']['Tables']['assets']['Insert'];
 
 const AssetCardSkeleton = () => (
     <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-md animate-pulse">
@@ -49,10 +51,10 @@ const ArenaPage: React.FC = () => {
         event.preventDefault();
         setIsSubmitting(true);
         const formData = new FormData(event.currentTarget);
-        // FIX: The `metadata: null` property was causing a type inference issue with the `insert` method,
-        // leading to an incorrect `never` type. Since `metadata` is optional, we can omit it, and the
-        // database will handle the default value.
-        const newAssetData = {
+        // FIX: The Supabase client's `insert` method was failing type inference, resulting in an argument type of `never`.
+        // By explicitly typing the `newAssetData` object with the `AssetInsert` type, we provide TypeScript
+        // with the correct shape, which resolves the overload error.
+        const newAssetData: AssetInsert = {
             sku_slug: formData.get('sku_slug') as string,
             name: formData.get('name') as string,
             current_rarity: formData.get('current_rarity') as RarityTier,

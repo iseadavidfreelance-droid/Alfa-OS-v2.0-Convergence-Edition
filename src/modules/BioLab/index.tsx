@@ -1,13 +1,14 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Database } from '../../types/database.types';
 import Toast from '../../components/ui/Toast';
-import { ArrowLeft, Dna, Info, FileJson } from 'lucide-react';
+import { ArrowLeft, Dna, Info, FileJson, DollarSign } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
+import FinancialLog from '../../components/FinancialLog';
 
 type Asset = Database['public']['Tables']['assets']['Row'];
+type Transaction = Database['public']['Tables']['transaction_ledger']['Row'];
 
 const DnaVisualization = () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-900/50 border border-gray-800 rounded-md p-8 min-h-[200px]">
@@ -31,8 +32,13 @@ const BioLab: React.FC = () => {
     const navigate = useNavigate();
 
     const [asset, setAsset] = useState<Asset | null>(null);
+    const [ledger, setLedger] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const totalRevenue = useMemo(() => {
+        return ledger.reduce((acc, tx) => acc + tx.amount, 0);
+    }, [ledger]);
 
     useEffect(() => {
         if (!assetId || assetId === 'new') {
@@ -41,24 +47,36 @@ const BioLab: React.FC = () => {
             return;
         }
 
-        const fetchAsset = async () => {
+        const fetchData = async () => {
             setLoading(true);
-            const { data: assetData, error: assetError } = await supabase
-                .from('assets')
-                .select('*')
-                .eq('id', assetId)
-                .single();
+            
+            // FIX: Using Promise.all was causing a type inference failure from the Supabase client, resulting in `assetResult` being typed as `never`.
+            // By awaiting promises sequentially, we ensure TypeScript can correctly infer the types for each database response.
+            const assetResult = await supabase.from('assets').select('*').eq('id', assetId).single();
 
-            if (assetError || !assetData) {
-                setToast({ message: `Failed to load asset: ${assetError?.message || 'Not found'}`, type: 'error' });
+            if (assetResult.error || !assetResult.data) {
+                setToast({ message: `Failed to load asset: ${assetResult.error?.message || 'Not found'}`, type: 'error' });
                 navigate('/arena');
-            } else {
-                setAsset(assetData as Asset);
+                return;
             }
+            
+            // FIX: With the correct type inference from the sequential await, `assetResult.data` is now correctly typed as `Asset | null`,
+            // so a type assertion is no longer needed.
+            setAsset(assetResult.data);
+
+            const ledgerResult = await supabase.from('transaction_ledger').select('*').eq('asset_id', assetId);
+
+            if (ledgerResult.error) {
+                 setToast({ message: `Failed to load financial log: ${ledgerResult.error.message}`, type: 'error' });
+                 setLedger([]);
+            } else {
+                setLedger(ledgerResult.data);
+            }
+
             setLoading(false);
         };
 
-        fetchAsset();
+        fetchData();
     }, [assetId, navigate]);
     
     if (loading) {
@@ -83,22 +101,30 @@ const BioLab: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
-                    <DetailField label="SKU Slug" icon={Info}>
-                        {asset.sku_slug}
-                    </DetailField>
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <DetailField label="SKU Slug" icon={Info}>
+                            {asset.sku_slug}
+                        </DetailField>
                          <DetailField label="Rarity Tier" icon={Info}>
                             <Badge rarity={asset.current_rarity} />
                         </DetailField>
-                         <DetailField label="Destination Link" icon={Info}>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <DetailField label="Destination Link" icon={Info}>
                             {asset.destination_link || <span className="text-gray-500">Not Set</span>}
                         </DetailField>
+                        <DetailField label="Total Revenue" icon={DollarSign}>
+                           <span className={totalRevenue >= 0 ? 'text-matrix' : 'text-alert'}>
+                               {totalRevenue.toFixed(2)}
+                           </span>
+                        </DetailField>
                     </div>
+
+                    <FinancialLog assetId={asset.id} />
+                    
                     <DetailField label="Matrix Configuration" icon={FileJson}>
                         <pre className="text-xs whitespace-pre-wrap">{asset.matrix_config ? JSON.stringify(asset.matrix_config, null, 2) : '{ }'}</pre>
-                    </DetailField>
-                     <DetailField label="Metadata" icon={FileJson}>
-                        <pre className="text-xs whitespace-pre-wrap">{asset.metadata ? JSON.stringify(asset.metadata, null, 2) : '{ }'}</pre>
                     </DetailField>
                 </div>
 
